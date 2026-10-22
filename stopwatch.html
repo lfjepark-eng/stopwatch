@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>올림포스 시계</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --sky-1: #b9dbf0; --sky-2: #e4f0f5; --sky-3: #f8f0dc;
+    --cloud: 1;
+    --marble: #fcf9f2;
+    --marble-2: #f3ecda;
+    --face: #fffdf7;
+    --input: #ffffff;
+    --sand: #e8dcc0;
+    --gold: #b08a3e;
+    --gold-light: #dcc17a;
+    --on-gold: #ffffff;
+    --aegean: #2d5b86;
+    --terracotta: #b5532f;
+    --amber: #c98a1a;
+    --laurel: #77893f;
+    --ink: #3b3226;
+    --muted: #7d705a;
+    --col-a: #e7dcc3; --col-b: #fffdf7; --col-c: #e2d6ba;
+    --shadow: rgba(110, 90, 40, .16);
+    --key: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cg fill='none' stroke='%23b08a3e' stroke-width='1.6'%3E%3Cpath d='M0 19H20'/%3E%3Cpath d='M19 19V1H5V15H15V5H9V11'/%3E%3C/g%3E%3C/svg%3E");
+    --font: "HY견고딕", "HYGothic-Extra", "Black Han Sans", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    --dial: 264px;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --sky-1: #0c1221; --sky-2: #172036; --sky-3: #2b2a36;
+    --cloud: .1;
+    --marble: #1f232b;
+    --marble-2: #2a2f39;
+    --face: #262b35;
+    --input: #171a20;
+    --sand: #3a404c;
+    --gold: #d4b062;
+    --gold-light: #8c7236;
+    --on-gold: #1c1608;
+    --aegean: #6ea3d6;
+    --terracotta: #e8795a;
+    --amber: #e5aa40;
+    --laurel: #9db35c;
+    --ink: #f0eadb;
+    --muted: #a69e8b;
+    --col-a: #1b1e25; --col-b: #3a404c; --col-c: #15171c;
+    --shadow: rgba(0, 0, 0, .45);
+    --key: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cg fill='none' stroke='%23d4b062' stroke-width='1.6'%3E%3Cpath d='M0 19H20'/%3E%3Cpath d='M19 19V1H5V15H15V5H9V11'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  * { box-sizing: border-box; }
+  html { min-height: 100%; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--ink); font-family: var(--font); font-synthesis: none;
+    background: linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 40%, var(--sky-3) 100%) fixed;
+    display: flex; justify-content: center; align-items: center; padding: 16px;
+    overflow-x: hidden; position: relative; transition: background .3s;
+  }
+  button, input { font-family: var(--font); }
+
+  /* 구름 */
+  .cloud {
+    position: fixed; z-index: 0; width: 320px; height: 90px; border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,.95) 0%, rgba(255,255,255,0) 70%);
+    filter: blur(6px); animation: drift 90s linear infinite; pointer-events: none; opacity: var(--cloud);
+  }
+  .cloud.c1 { top: 6%;  left: -340px; }
+  .cloud.c2 { top: 30%; left: -340px; animation-duration: 130s; animation-delay: -50s; transform: scale(1.4); }
+  .cloud.c3 { top: 72%; left: -340px; animation-duration: 110s; animation-delay: -20s; }
+  @keyframes drift { to { left: 110vw; } }
+  @media (prefers-reduced-motion: reduce) { .cloud { animation: none; left: 10%; } }
+
+  /* 신전 */
+  .temple { position: relative; z-index: 1; width: 100%; max-width: 780px; }
+  .col {
+    position: absolute; top: 76px; bottom: 44px; width: 40px; display: none;
+    background: repeating-linear-gradient(90deg, var(--col-a) 0 5px, var(--col-b) 5px 11px, var(--col-c) 11px 15px);
+    box-shadow: inset 0 0 0 1px rgba(176,138,62,.35), 0 8px 18px var(--shadow);
+  }
+  .col::before, .col::after {
+    content: ""; position: absolute; left: -7px; right: -7px; height: 14px;
+    background: linear-gradient(var(--face), var(--sand)); border: 1px solid var(--gold-light); border-radius: 2px;
+  }
+  .col::before { top: -14px; } .col::after { bottom: -14px; }
+  .col.l { left: -76px; } .col.r { right: -76px; }
+  @media (min-width: 960px) { .col { display: block; } }
+
+  .pediment { position: relative; height: 62px; margin-bottom: -2px; }
+  .pediment svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .pd1 { fill: var(--face); stroke: var(--gold); stroke-width: 2; }
+  .pd2 { fill: var(--marble-2); stroke: var(--gold-light); stroke-width: 1; }
+  .pediment .t { position: absolute; left: 0; right: 0; bottom: 5px; text-align: center; }
+  .pediment h1 { margin: 0; font-size: 17px; line-height: 1; font-weight: 400; letter-spacing: .42em; padding-left: .42em; color: var(--ink); }
+  .pediment p { margin: 3px 0 0; font-size: 10px; letter-spacing: .18em; color: var(--gold); }
+
+  .frieze { height: 14px; background: var(--key) repeat-x center / 14px 14px; border-block: 2px solid var(--gold-light); background-color: var(--marble-2); }
+
+  .card {
+    background: var(--marble); border-inline: 2px solid var(--gold-light);
+    padding: 18px 24px; box-shadow: 0 18px 40px var(--shadow);
+    display: grid; grid-template-columns: var(--dial) 1fr; gap: 28px; align-items: center;
+    transition: background .3s;
+  }
+  .side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+  /* 현재 시각 */
+  .now { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding-bottom: 8px; border-bottom: 1px solid var(--sand); }
+  .now .t { font-size: 24px; letter-spacing: .06em; color: var(--aegean); font-variant-numeric: tabular-nums; }
+  .now .d { font-size: 12px; color: var(--muted); }
+
+  /* 탭 */
+  .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .tab {
+    font-size: 13px; padding: 9px 4px; cursor: pointer; color: var(--muted);
+    background: transparent; border: 1px solid var(--sand); border-radius: 4px; transition: .15s;
+  }
+  .tab:hover { color: var(--ink); border-color: var(--gold-light); }
+  .tab.on { color: #fff; background: linear-gradient(180deg, #3f75a8, #2d5b86); border-color: #2d5b86; }
+
+  /* 다이얼 */
+  .dial { position: relative; width: var(--dial); height: var(--dial); --ring: var(--gold); }
+  .dial.warn { --ring: var(--amber); }
+  .dial.alert { --ring: var(--terracotta); }
+  .dial.break { --ring: var(--laurel); }
+  .dial svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .face-bg { fill: var(--face); stroke: var(--sand); stroke-width: 10; }
+  .ring-in { fill: none; stroke: var(--gold-light); stroke-width: 1; }
+  .lf { fill: var(--laurel); }
+  .tk { stroke: var(--gold); }
+  #prog { stroke: var(--ring); transition: stroke .3s; }
+  .face {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding-bottom: 2%;
+  }
+  .face .label { font-size: calc(var(--dial) * .04); line-height: 1; letter-spacing: .22em; padding-left: .22em; color: var(--muted); }
+  .face .big { font-size: calc(var(--dial) * .135); line-height: 1.15; margin: 5px 0; white-space: nowrap; color: var(--ink); }
+  .dial.alert .big { color: var(--terracotta); animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .55; } }
+  .big .d { display: inline-block; width: .68em; text-align: center; }
+  .big .c { display: inline-block; width: .34em; text-align: center; }
+  .big .p { display: inline-block; width: .6em; text-align: center; }
+  .face .sub { font-size: calc(var(--dial) * .042); color: var(--muted); min-height: 1.2em; }
+
+  /* 옵션 */
+  .opts > div { display: none; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 34px; }
+  .opts > div.on { display: flex; }
+  .chip {
+    font-size: 12px; padding: 5px 10px; border-radius: 999px; cursor: pointer;
+    background: var(--marble-2); border: 1px solid var(--sand); color: var(--ink);
+  }
+  .chip:hover { border-color: var(--gold); }
+  .chip.on { background: var(--gold); border-color: var(--gold); color: var(--on-gold); }
+  .field { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+  .field input {
+    width: 56px; padding: 5px 6px; font-size: 13px; text-align: center;
+    border: 1px solid var(--sand); border-radius: 4px; background: var(--input); color: var(--ink);
+  }
+  .field input:focus { outline: 2px solid var(--gold-light); }
+  .hintline { font-size: 12px; color: var(--muted); }
+
+  /* 버튼 */
+  .buttons { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; padding: 11px 0; font-size: 14px; cursor: pointer; border-radius: 4px;
+    color: var(--ink); background: var(--marble-2); border: 1px solid var(--gold-light); transition: .15s;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--gold); background: var(--face); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn.main { flex: 1.5; color: var(--on-gold); background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 82%, #fff), var(--gold)); border-color: var(--gold); }
+  .btn.main:hover:not(:disabled) { filter: brightness(1.08); background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 82%, #fff), var(--gold)); }
+  .btn.main.run { color: #fff; background: linear-gradient(180deg, color-mix(in srgb, var(--terracotta) 82%, #fff), var(--terracotta)); border-color: var(--terracotta); }
+
+  .hint { color: var(--muted); font-size: 11px; letter-spacing: .02em; }
+
+  /* 랩 */
+  ol.laps { list-style: none; margin: 0; padding: 0; max-height: 72px; overflow-y: auto; }
+  ol.laps:empty { display: none; }
+  ol.laps li {
+    display: grid; grid-template-columns: 52px 1fr 1fr; padding: 5px 4px; font-size: 13px;
+    border-top: 1px solid var(--sand); font-variant-numeric: tabular-nums;
+  }
+  ol.laps li span:nth-child(2) { text-align: center; }
+  ol.laps li span:last-child { text-align: right; color: var(--muted); }
+  ol.laps .n { color: var(--muted); }
+  ol.laps li.best span:nth-child(2) { color: var(--laurel); }
+  ol.laps li.worst span:nth-child(2) { color: var(--terracotta); }
+
+  .base { height: 12px; background: linear-gradient(var(--face), var(--sand)); border: 2px solid var(--gold-light); border-radius: 0 0 3px 3px; }
+  .foot { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--muted); letter-spacing: .06em; margin-top: 10px; }
+  .foot .motto { color: var(--gold); letter-spacing: .12em; }
+  .seg { display: inline-flex; border: 1px solid var(--gold-light); border-radius: 999px; overflow: hidden; }
+  .seg button { background: transparent; border: none; color: var(--muted); font-size: 11px; padding: 4px 11px; cursor: pointer; }
+  .seg button.on { background: var(--gold); color: var(--on-gold); }
+  .link { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 11px; text-decoration: underline; }
+
+  .toast {
+    position: fixed; z-index: 5; left: 50%; bottom: 20px; transform: translate(-50%, 20px); opacity: 0;
+    background: var(--aegean); color: #fff; padding: 10px 18px; border-radius: 4px; border: 1px solid var(--gold-light);
+    font-size: 14px; transition: .3s; pointer-events: none; max-width: 90vw; text-align: center;
+  }
+  :root[data-theme="dark"] .toast { background: #2d5b86; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* 좁은 화면: 세로 배치 */
+  @media (max-width: 700px) {
+    :root { --dial: min(250px, 72vw); }
+    .card { grid-template-columns: 1fr; justify-items: center; gap: 14px; padding: 16px; }
+    .side { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+
+<div class="temple">
+  <div class="col l"></div><div class="col r"></div>
+
+  <header class="pediment">
+    <svg viewBox="0 0 780 62" preserveAspectRatio="none" aria-hidden="true">
+      <polygon class="pd1" points="0,60 390,3 780,60"/>
+      <polygon class="pd2" points="40,57 390,11 740,57"/>
+    </svg>
+    <div class="t"><h1>OLYMPUS</h1><p>ΧΡΟΝΟΣ · 올림포스 시계</p></div>
+  </header>
+  <div class="frieze"></div>
+
+  <main class="card">
+    <div class="dial" id="dial">
+      <svg viewBox="0 0 360 360" aria-hidden="true">
+        <g id="laurel"></g>
+        <g id="ticks"></g>
+        <circle class="face-bg" cx="180" cy="180" r="128"/>
+        <circle id="prog" cx="180" cy="180" r="128" fill="none" stroke-width="10" stroke-linecap="round"
+                transform="rotate(-90 180 180)"/>
+        <circle class="ring-in" cx="180" cy="180" r="112"/>
+      </svg>
+      <div class="face">
+        <div class="label" id="label"></div>
+        <div class="big" id="big"></div>
+        <div class="sub" id="sub"></div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="now"><span class="t" id="clock">--:--:--</span><span class="d" id="date"></span></div>
+
+      <nav class="tabs" id="tabs">
+        <button class="tab" data-tab="sw">스탑워치</button>
+        <button class="tab" data-tab="tm">회의 타이머</button>
+        <button class="tab" data-tab="wk">업무 집중</button>
+      </nav>
+
+      <div class="opts">
+        <div data-p="sw"><span class="hintline">랩을 눌러 구간별 시간을 기록하세요</span></div>
+        <div data-p="tm" id="tmOpts">
+          <button class="chip" data-min="5">5분</button>
+          <button class="chip" data-min="10">10분</button>
+          <button class="chip" data-min="15">15분</button>
+          <button class="chip" data-min="30">30분</button>
+          <button class="chip" data-min="45">45분</button>
+          <button class="chip" data-min="60">60분</button>
+          <label class="field"><input id="tmCustom" type="number" min="1" max="600" inputmode="numeric"> 분 직접 입력</label>
+        </div>
+        <div data-p="wk">
+          <label class="field">집중 <input id="wkWork" type="number" min="1" max="180" inputmode="numeric"> 분</label>
+          <label class="field">휴식 <input id="wkBrk" type="number" min="1" max="60" inputmode="numeric"> 분</label>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button class="btn" id="secBtn"></button>
+        <button class="btn main" id="mainBtn">시작</button>
+        <button class="btn" id="resetBtn">리셋</button>
+      </div>
+      <div class="hint" id="hint"></div>
+      <ol class="laps" id="laps"></ol>
+    </div>
+  </main>
+  <div class="frieze"></div>
+  <div class="base"></div>
+  <div class="foot">
+    <span class="motto">ΜΗΔΕΝ ΑΓΑΝ</span>
+    <span class="seg" role="group" aria-label="화면 모드">
+      <button data-theme-btn="light">☀ 밝은 모드</button>
+      <button data-theme-btn="dark">☾ 어두운 모드</button>
+    </span>
+    <button class="link" id="soundBtn"></button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2, '0');
+  const C = 2 * Math.PI * 128;               // 진행 링 둘레
+  const KEY = 'olympus-clock-v1';
+
+  /* ---------- 상태 ---------- */
+  const defaults = () => ({
+    tab: 'sw', sound: true, theme: 'light',
+    sw: { run: false, t0: 0, acc: 0, laps: [] },
+    tm: { dur: 600000, run: false, t0: 0, acc: 0, fired: false },
+    wk: { work: 50, brk: 10, phase: 'work', run: false, t0: 0, acc: 0, today: { date: '', ms: 0, n: 0 } }
+  });
+  let S = defaults();
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved) {
+      S.tab = saved.tab || S.tab; S.sound = saved.sound !== false; S.theme = saved.theme === 'dark' ? 'dark' : 'light';
+      for (const k of ['sw', 'tm', 'wk']) Object.assign(S[k], saved[k]);
+    }
+  } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+  const el = o => o.acc + (o.run ? Date.now() - o.t0 : 0);
+  const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+  function ensureToday() {
+    if (S.wk.today.date !== todayStr()) S.wk.today = { date: todayStr(), ms: 0, n: 0 };
+  }
+
+  /* ---------- 화면 모드 ---------- */
+  function applyTheme() {
+    document.documentElement.dataset.theme = S.theme;
+    document.querySelectorAll('[data-theme-btn]').forEach(b => b.classList.toggle('on', b.dataset.themeBtn === S.theme));
+  }
+  document.querySelectorAll('[data-theme-btn]').forEach(b => b.addEventListener('click', () => {
+    S.theme = b.dataset.themeBtn; save(); applyTheme();
+  }));
+
+  /* ---------- 포맷 ---------- */
+  function fmt(ms, cs) {
+    ms = Math.max(0, ms);
+    const h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60, s = Math.floor(ms / 1000) % 60;
+    let out = (h ? pad(h) + ':' : '') + pad(m) + ':' + pad(s);
+    if (cs && !h) out += '.' + pad(Math.floor(ms / 10) % 100);
+    return out;
+  }
+  function setBig(text) {
+    $('big').innerHTML = [...text].map(ch =>
+      /\d/.test(ch) ? `<span class="d">${ch}</span>` : ch === '+' ? `<span class="p">+</span>` : `<span class="c">${ch}</span>`
+    ).join('');
+  }
+  const hm = ms => { const m = Math.floor(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m}분`; };
+
+  /* ---------- 소리/알림 ---------- */
+  let actx = null;
+  function beep(times = 3) {
+    if (!S.sound) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      for (let i = 0; i < times; i++) {
+        const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + i * 0.38;
+        o.type = 'sine'; o.frequency.value = i % 2 ? 880 : 660;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.25, t + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+        o.connect(g).connect(actx.destination); o.start(t); o.stop(t + 0.32);
+      }
+    } catch (e) {}
+  }
+  let toastTimer;
+  function toast(msg) {
+    $('toast').textContent = msg; $('toast').classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('show'), 5000);
+  }
+
+  /* ---------- 장식 (월계관·눈금) ---------- */
+  (function decorate() {
+    let leaves = '', ticks = '';
+    for (const side of [1, -1]) {
+      for (let i = 0; i < 13; i++) {
+        const a = (90 + side * (8 + i * 11)) * Math.PI / 180, R = 160;
+        const x = 180 + R * Math.cos(a), y = 180 + R * Math.sin(a);
+        const rot = a * 180 / Math.PI + 90 + side * -28;
+        leaves += `<ellipse class="lf" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="4.2" ry="11" opacity="${(0.95 - i * 0.03).toFixed(2)}" transform="rotate(${rot.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+      }
+    }
+    for (let i = 0; i < 60; i++) {
+      const a = i * 6 * Math.PI / 180, big = i % 5 === 0, r1 = big ? 138 : 142, r2 = 148;
+      ticks += `<line class="tk" x1="${(180 + r1 * Math.sin(a)).toFixed(1)}" y1="${(180 - r1 * Math.cos(a)).toFixed(1)}" x2="${(180 + r2 * Math.sin(a)).toFixed(1)}" y2="${(180 - r2 * Math.cos(a)).toFixed(1)}" stroke-width="${big ? 2.2 : 1}" opacity="${big ? 1 : .55}"/>`;
+    }
+    $('laurel').innerHTML = leaves; $('ticks').innerHTML = ticks;
+    $('prog').style.strokeDasharray = C;
+  })();
+
+  /* ---------- 업무 집중 페이즈 ---------- */
+  const phaseDur = () => (S.wk.phase === 'work' ? S.wk.work : S.wk.brk) * 60000;
+  function finishPhase(complete) {
+    const w = S.wk; ensureToday();
+    if (w.phase === 'work') { w.today.ms += complete ? phaseDur() : el(w); if (complete) w.today.n++; }
+    const wasRun = w.run;
+    w.phase = w.phase === 'work' ? 'break' : 'work';
+    w.acc = 0; w.t0 = Date.now(); w.run = complete ? true : wasRun;
+    if (complete) {
+      beep(2);
+      toast(w.phase === 'break' ? `집중 종료 — ${w.brk}분 휴식을 시작합니다` : `휴식 종료 — ${w.work}분 집중을 시작합니다`);
+    }
+    save();
+  }
+
+  /* ---------- 틱 ---------- */
+  function checks() {
+    const t = S.tm, w = S.wk;
+    if (t.run && !t.fired && t.dur - el(t) <= 0) {
+      t.fired = true; save(); beep(4); toast('회의 시간이 종료되었습니다');
+    }
+    if (w.run && el(w) >= phaseDur()) finishPhase(true);
+  }
+
+  function render() {
+    const n = new Date();
+    $('clock').textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+    $('date').textContent = n.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+
+    const dial = $('dial'); dial.className = 'dial';
+    let big, label, sub, prog, o, title;
+    if (S.tab === 'sw') {
+      o = S.sw; const e = el(o);
+      label = '경과 시간'; big = fmt(e, true); prog = (e % 60000) / 60000;
+      sub = o.laps.length ? `랩 ${o.laps.length}개` : '';
+      title = fmt(e);
+    } else if (S.tab === 'tm') {
+      o = S.tm; const rem = o.dur - el(o);
+      if (rem > 0) {
+        const r = Math.ceil(rem / 1000) * 1000;
+        label = '남은 시간'; big = fmt(r); prog = rem / o.dur;
+        if (r <= 60000 && o.dur > 60000) dial.classList.add('alert');
+        else if (r <= 300000 && o.dur > 300000) dial.classList.add('warn');
+        sub = o.run ? `종료 예정 ${new Date(Date.now() + rem).toTimeString().slice(0, 5)}` : `설정 ${hm(o.dur)}`;
+        title = '⏳ ' + fmt(r);
+      } else {
+        label = '초과 시간'; big = '+' + fmt(-rem); prog = 1; dial.classList.add('alert');
+        sub = '회의 시간이 지났습니다'; title = '⏰ +' + fmt(-rem);
+      }
+    } else {
+      o = S.wk; ensureToday();
+      const rem = phaseDur() - el(o), r = Math.ceil(Math.max(0, rem) / 1000) * 1000;
+      const work = o.phase === 'work';
+      label = work ? '집중 시간' : '휴식 시간'; big = fmt(r); prog = Math.max(0, rem) / phaseDur();
+      if (!work) dial.classList.add('break');
+      const live = o.today.ms + (work ? el(o) : 0);
+      sub = `오늘 집중 ${hm(live)} · ${o.today.n}세션`;
+      title = (work ? '🏛 ' : '🌿 ') + fmt(r);
+    }
+    setBig(big);
+    $('label').textContent = label; $('sub').textContent = sub;
+    $('prog').style.strokeDashoffset = C * (1 - Math.min(1, Math.max(0, prog)));
+    document.title = (o.run || S.tab === 'tm' && S.tm.fired) ? `${title} · 올림포스 시계` : '올림포스 시계';
+
+    // 버튼
+    const main = $('mainBtn'), sec = $('secBtn'), reset = $('resetBtn');
+    main.textContent = o.run ? '일시정지' : (o.acc > 0 ? '계속' : '시작');
+    main.classList.toggle('run', o.run);
+    if (S.tab === 'sw') {
+      sec.textContent = '랩'; sec.disabled = !o.run; reset.disabled = o.run || (o.acc === 0 && !o.laps.length);
+    } else if (S.tab === 'tm') {
+      sec.textContent = '+5분'; sec.disabled = false; reset.disabled = !o.run && o.acc === 0 && !o.fired;
+    } else {
+      sec.textContent = '건너뛰기'; sec.disabled = false; reset.disabled = !o.run && o.acc === 0 && o.phase === 'work';
+    }
+  }
+
+  function renderLaps() {
+    const L = S.sw.laps, sp = L.map((t, i) => t - (L[i - 1] || 0));
+    const best = sp.length > 1 ? Math.min(...sp) : null, worst = sp.length > 1 ? Math.max(...sp) : null;
+    $('laps').innerHTML = sp.map((s, i) =>
+      `<li class="${s === best ? 'best' : s === worst ? 'worst' : ''}"><span class="n">랩 ${i + 1}</span><span>${fmt(s, true)}</span><span>${fmt(L[i], true)}</span></li>`
+    ).reverse().join('');
+  }
+
+  /* ---------- 동작 ---------- */
+  const cur = () => S[S.tab];
+  function toggle() {
+    const o = cur();
+    if (o.run) { o.acc = el(o); o.run = false; } else { o.t0 = Date.now(); o.run = true; }
+    save(); render();
+  }
+  function secondary() {
+    if (S.tab === 'sw') { if (S.sw.run) { S.sw.laps.push(el(S.sw)); renderLaps(); } }
+    else if (S.tab === 'tm') { S.tm.dur += 300000; S.tm.fired = false; syncInputs(); }
+    else finishPhase(false);
+    save(); render();
+  }
+  function reset() {
+    const o = cur();
+    if (S.tab === 'sw') { if (o.run) return; o.laps = []; renderLaps(); }
+    if (S.tab === 'tm') o.fired = false;
+    if (S.tab === 'wk') { ensureToday(); if (o.phase === 'work') o.today.ms += el(o); o.phase = 'work'; }
+    o.acc = 0; o.run = false;
+    save(); render();
+  }
+
+  function setTab(t) {
+    S.tab = t; save();
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+    document.querySelectorAll('.opts > div').forEach(d => d.classList.toggle('on', d.dataset.p === t));
+    $('laps').style.display = t === 'sw' ? '' : 'none';
+    $('hint').textContent = {
+      sw: 'Space 시작/정지 · L 랩 · R 리셋 · 1·2·3 탭 전환',
+      tm: 'Space 시작/정지 · R 리셋 · 종료 후에는 초과 시간이 표시됩니다',
+      wk: '집중·휴식 자동 전환 · 오늘 기록은 이 브라우저에 저장됩니다'
+    }[t];
+    render();
+  }
+
+  function syncInputs() {
+    const min = S.tm.dur / 60000;
+    document.querySelectorAll('#tmOpts .chip').forEach(c => c.classList.toggle('on', +c.dataset.min === min));
+    $('tmCustom').value = Number.isInteger(min) ? min : '';
+    $('wkWork').value = S.wk.work; $('wkBrk').value = S.wk.brk;
+  }
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Math.round(v) || lo));
+
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+  $('mainBtn').addEventListener('click', toggle);
+  $('secBtn').addEventListener('click', secondary);
+  $('resetBtn').addEventListener('click', reset);
+  const soundLabel = () => { $('soundBtn').textContent = S.sound ? '알림음 켜짐' : '알림음 꺼짐'; };
+  $('soundBtn').addEventListener('click', () => { S.sound = !S.sound; save(); soundLabel(); });
+
+  function setMeeting(min) {
+    S.tm.dur = min * 60000; S.tm.acc = 0; S.tm.run = false; S.tm.fired = false;
+    syncInputs(); save(); render();
+  }
+  document.querySelectorAll('#tmOpts .chip').forEach(c => c.addEventListener('click', () => setMeeting(+c.dataset.min)));
+  $('tmCustom').addEventListener('change', e => setMeeting(clamp(+e.target.value, 1, 600)));
+  $('wkWork').addEventListener('change', e => { S.wk.work = clamp(+e.target.value, 1, 180); syncInputs(); save(); render(); });
+  $('wkBrk').addEventListener('change', e => { S.wk.brk = clamp(+e.target.value, 1, 60); syncInputs(); save(); render(); });
+
+  document.addEventListener('keydown', e => {
+    if (e.repeat || e.target.tagName === 'INPUT' || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.code === 'Space') { e.preventDefault(); toggle(); }
+    else if (e.code === 'KeyL' && S.tab === 'sw') secondary();
+    else if (e.code === 'KeyR') reset();
+    else if (e.key === '1') setTab('sw');
+    else if (e.key === '2') setTab('tm');
+    else if (e.key === '3') setTab('wk');
+  });
+
+  /* ---------- 시작 ---------- */
+  applyTheme(); soundLabel(); syncInputs(); renderLaps(); setTab(S.tab);
+  setInterval(() => { checks(); render(); }, 100);
+</script>
+</body>
+</html>
